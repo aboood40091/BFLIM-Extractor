@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # BFLIM Extractor
-# Version v1.0
+# Version v1.1
 # Copyright © 2016 AboodXD
 
 # This file is part of BFLIM Extractor.
@@ -30,15 +30,10 @@ __copyright__ = "Copyright 2016 AboodXD"
 __credits__ = ["AboodXD", "libtxc_dxtn", "Exzap"]
 
 formats = {0x00000000: 'GX2_SURFACE_FORMAT_INVALID',
-           0x00000008: 'GX2_SURFACE_FORMAT_TCS_R5_G6_B5_UNORM',
            0x0000001a: 'GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM',
-           0x0000041a: 'GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_SRGB',
            0x00000031: 'GX2_SURFACE_FORMAT_T_BC1_UNORM',
-           0x00000431: 'GX2_SURFACE_FORMAT_T_BC1_SRGB',
            0x00000032: 'GX2_SURFACE_FORMAT_T_BC2_UNORM',
-           0x00000432: 'GX2_SURFACE_FORMAT_T_BC2_SRGB',
            0x00000033: 'GX2_SURFACE_FORMAT_T_BC3_UNORM',
-           0x00000433: 'GX2_SURFACE_FORMAT_T_BC3_SRGB'
            }
 
 m_banks = 4
@@ -316,20 +311,20 @@ def readFLIM(f):
         flim.format = 0x00000008
     elif info.format_ == 0x00000009: # RGBA32_UNORM
         flim.format = 0x0000001a
-    elif info.format_ == 0x00000014: # RGBA32_SRGB ?
-        flim.format = 0x0000041a
+    elif info.format_ == 0x00000014: # RGBA32_UNORM
+        flim.format = 0x0000001a
     elif info.format_ == 0x0000000C: # BC1_UNORM
         flim.format = 0x00000031
-    elif info.format_ == 0x00000015: # BC1_SRGB ?
-        flim.format = 0x00000431
+    elif info.format_ == 0x00000015: # BC1_UNORM
+        flim.format = 0x00000031
     elif info.format_ == 0x0000000D: # BC2_UNORM
         flim.format = 0x00000032
-    elif info.format_ == 0x00000016: # BC2_SRGB ?
-        flim.format = 0x00000432
+    elif info.format_ == 0x00000016: # BC2_UNORM
+        flim.format = 0x00000032
     elif info.format_ == 0x0000000E: # BC3_UNORM
         flim.format = 0x00000033
-    elif info.format_ == 0x00000017: # BC3_SRGB ?
-        flim.format = 0x00000433
+    elif info.format_ == 0x00000017: # BC3_UNORM
+        flim.format = 0x00000033
     else:
         flim.format = info.format_
 
@@ -343,14 +338,14 @@ def readFLIM(f):
     # Calculate Pitch
     bpp = surfaceGetBitsPerPixel(flim.format)
 
-    flim.pitch = max(flim.width, flim.height) // bpp
+    flim.pitch = flim.width // bpp
 
     import math
     frac, whole = math.modf(flim.pitch)
     whole = int(whole)
 
-    if (bpp * whole) < max(flim.width, flim.height):
-        whole = whole + 1
+    while (bpp * whole) < flim.width:
+        whole += 1
 
     flim.pitch = (bpp * whole)
 
@@ -965,7 +960,7 @@ def main():
     """
     This place is a mess...
     """
-    print("BFLIM Extractor v1.0")
+    print("BFLIM Extractor v1.1")
     print("(C) 2016 AboodXD")
     
     if len(sys.argv) != 2:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # BFLIM Extractor
-# Version v1.0
+# Version v1.1
 # Copyright © 2016 AboodXD
 
 # This file is part of BFLIM Extractor.
@@ -24,7 +24,7 @@
 import os, shutil, sys
 from cx_Freeze import setup, Executable
 
-version = 'v1.0'
+version = 'v1.1'
 
 # Pick a build directory
 dir_ = 'bflim_extract ' + version
