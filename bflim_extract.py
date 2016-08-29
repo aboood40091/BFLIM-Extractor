@@ -307,9 +307,7 @@ def readFLIM(f):
     flim.width = info.width
     flim.height = info.height
 
-    if info.format_ == 0x00000005: # RGBA565_UNORM
-        flim.format = 0x00000008
-    elif info.format_ == 0x00000009: # RGBA32_UNORM
+    if info.format_ == 0x00000009: # RGBA32_UNORM
         flim.format = 0x0000001a
     elif info.format_ == 0x00000014: # RGBA32_UNORM
         flim.format = 0x0000001a
