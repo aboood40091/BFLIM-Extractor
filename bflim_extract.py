@@ -407,17 +407,17 @@ def writeFLIM(flim, f, isCMD):
 
             import struct
 
-            if (gfd.format == 0x31 or gfd.format == 0x431):
+            if (flim.format == 0x31 or flim.format == 0x431):
                 if (struct.calcsize("P") * 8) == 32:
                     os.system('C:\\"Program Files"\Compressonator\CompressonatorCLI.exe -fd BC1 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
                 elif (struct.calcsize("P") * 8) == 64:
                     os.system('C:\\"Program Files (x86)"\Compressonator\CompressonatorCLI.exe -fd BC1 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
-            elif (gfd.format == 0x32 or gfd.format == 0x432):
+            elif (flim.format == 0x32 or flim.format == 0x432):
                 if (struct.calcsize("P") * 8) == 32:
                     os.system('C:\\"Program Files"\Compressonator\CompressonatorCLI.exe -fd BC2 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
                 elif (struct.calcsize("P") * 8) == 64:
                     os.system('C:\\"Program Files (x86)"\Compressonator\CompressonatorCLI.exe -fd BC2 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
-            elif (gfd.format == 0x33 or gfd.format == 0x433):
+            elif (flim.format == 0x33 or flim.format == 0x433):
                 if (struct.calcsize("P") * 8) == 32:
                     os.system('C:\\"Program Files"\Compressonator\CompressonatorCLI.exe -fd BC3 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
                 elif (struct.calcsize("P") * 8) == 64:
