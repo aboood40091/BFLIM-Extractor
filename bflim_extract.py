@@ -974,7 +974,7 @@ def main():
     """
     This place is a mess...
     """
-    print("BFLIM Extractor v1.1")
+    print("BFLIM Extractor v1.2")
     print("(C) 2016 AboodXD")
     
     if (len(sys.argv) == 4 and sys.argv[3] != "--cmd"):
