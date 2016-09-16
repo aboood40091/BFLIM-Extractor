@@ -6,7 +6,7 @@ Can Also convert .png files into .bflim files!
 # Requirements:
 Python 3.4 or higher.
 
-PyQt5.
+Pillow.
 
 Compressonator.
 
