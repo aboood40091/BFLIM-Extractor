@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # BFLIM Extractor
-# Version v1.1
+# Version v1.2
 # Copyright © 2016 AboodXD
 
 # This file is part of BFLIM Extractor.
@@ -23,7 +23,7 @@
 
 import os, struct, sys, time
 
-from PyQt5 import QtGui
+from PIL import Image
 
 __author__ = "AboodXD"
 __copyright__ = "Copyright 2016 AboodXD"
@@ -107,7 +107,7 @@ def dxt135_decode_imageblock(pixdata, img_block_src, i, j, dxt_type):
 
     return ACOMP, RCOMP, GCOMP, BCOMP
 
-def fetch_2d_texel_rgb_dxt1(srcRowStride, pixdata, i, j):
+def fetch_2d_texel_rgb_dxt1(srcRowStride, pixdata, i, j, isCMD):
 
     """
     Extract the (i,j) pixel from pixdata and return it
@@ -125,12 +125,13 @@ def fetch_2d_texel_rgb_dxt1(srcRowStride, pixdata, i, j):
         print("")
         print("This type of BC compression is not equivalent to DXT compression!")
         print("AboodXD is currently working on a workaround for this... ;)")
-        print("")
-        print("Exiting in 5 seconds...")
-        time.sleep(5)
+        if not isCMD:
+            print("")
+            print("Exiting in 5 seconds...")
+            time.sleep(5)
         sys.exit(1)
 
-def fetch_2d_texel_rgba_dxt1(srcRowStride, pixdata, i, j):
+def fetch_2d_texel_rgba_dxt1(srcRowStride, pixdata, i, j, isCMD):
 
     """
     Extract the (i,j) pixel from pixdata and return it
@@ -148,12 +149,13 @@ def fetch_2d_texel_rgba_dxt1(srcRowStride, pixdata, i, j):
         print("")
         print("This type of BC compression is not equivalent to DXT compression!")
         print("AboodXD is currently working on a workaround for this... ;)")
-        print("")
-        print("Exiting in 5 seconds...")
-        time.sleep(5)
+        if not isCMD:
+            print("")
+            print("Exiting in 5 seconds...")
+            time.sleep(5)
         sys.exit(1)
 
-def fetch_2d_texel_rgba_dxt3(srcRowStride, pixdata, i, j):
+def fetch_2d_texel_rgba_dxt3(srcRowStride, pixdata, i, j, isCMD):
 
     """
     Extract the (i,j) pixel from pixdata and return it
@@ -172,12 +174,13 @@ def fetch_2d_texel_rgba_dxt3(srcRowStride, pixdata, i, j):
         print("")
         print("This type of BC compression is not equivalent to DXT compression!")
         print("AboodXD is currently working on a workaround for this... ;)")
-        print("")
-        print("Exiting in 5 seconds...")
-        time.sleep(5)
+        if not isCMD:
+            print("")
+            print("Exiting in 5 seconds...")
+            time.sleep(5)
         sys.exit(1)
 
-def fetch_2d_texel_rgba_dxt5(srcRowStride, pixdata, i, j):
+def fetch_2d_texel_rgba_dxt5(srcRowStride, pixdata, i, j, isCMD):
 
     """
     Extract the (i,j) pixel from pixdata and return it
@@ -215,12 +218,13 @@ def fetch_2d_texel_rgba_dxt5(srcRowStride, pixdata, i, j):
         print("")
         print("This type of BC compression is not equivalent to DXT compression!")
         print("AboodXD is currently working on a workaround for this... :)")
-        print("")
-        print("Exiting in 5 seconds...")
-        time.sleep(5)
+        if not isCMD:
+            print("")
+            print("Exiting in 5 seconds...")
+            time.sleep(5)
         sys.exit(1)
 
-def fetch_2d_texel_rgba_dxt(data, width, height, format_):
+def fetch_2d_texel_rgba_dxt(data, width, height, format_, isCMD):
 
     """
     Does the decompression for DXT compressed images.
@@ -232,19 +236,19 @@ def fetch_2d_texel_rgba_dxt(data, width, height, format_):
         for x in range(width):
             if (format_ == 0x31 or format_ == 0x431):
                 try:
-                    outValue = fetch_2d_texel_rgba_dxt1(width, data, x, y)
+                    outValue = fetch_2d_texel_rgba_dxt1(width, data, x, y, isCMD)
                     pos__ = (y * width + x) * 4
                     output[pos__:pos__ + 4] = outValue
                 except:
-                    outValue = fetch_2d_texel_rgb_dxt1(width, data, x, y)
+                    outValue = fetch_2d_texel_rgb_dxt1(width, data, x, y, isCMD)
                     pos__ = (y * width + x) * 4
                     output[pos__:pos__ + 4] = outValue
             elif (format_ == 0x32 or format_ == 0x432):
-                outValue = fetch_2d_texel_rgba_dxt3(width, data, x, y)
+                outValue = fetch_2d_texel_rgba_dxt3(width, data, x, y, isCMD)
                 pos__ = (y * width + x) * 4
                 output[pos__:pos__ + 4] = outValue
             elif (format_ == 0x33 or format_ == 0x433):
-                outValue = fetch_2d_texel_rgba_dxt5(width, data, x, y)
+                outValue = fetch_2d_texel_rgba_dxt5(width, data, x, y, isCMD)
                 pos__ = (y * width + x) * 4
                 output[pos__:pos__ + 4] = outValue
 
@@ -313,6 +317,8 @@ def readFLIM(f):
         flim.format = 0x0000001a
     elif info.format_ == 0x0000000C: # BC1_UNORM
         flim.format = 0x00000031
+    elif info.format_ == 0x00000012: # BC1_UNORM
+        flim.format = 0x00000031
     elif info.format_ == 0x00000015: # BC1_UNORM
         flim.format = 0x00000031
     elif info.format_ == 0x0000000D: # BC2_UNORM
@@ -336,23 +342,26 @@ def readFLIM(f):
     # Calculate Pitch
     bpp = surfaceGetBitsPerPixel(flim.format)
 
-    flim.pitch = flim.width // bpp
+    try:
+        flim.pitch = flim.width // bpp
 
-    import math
-    frac, whole = math.modf(flim.pitch)
-    whole = int(whole)
+        import math
+        frac, whole = math.modf(flim.pitch)
+        whole = int(whole)
 
-    while (bpp * whole) < flim.width:
-        whole += 1
+        while (bpp * whole) < flim.width:
+            whole += 1
 
-    flim.pitch = (bpp * whole)
+        flim.pitch = (bpp * whole)
+    except ZeroDivisionError:
+        flim.pitch = 1
 
     flim.data = f[:-(0x28)]
     flim.dataSize = len(flim.data)
 
     return flim
 
-def writePNG(flim):
+def writePNG(flim, isCMD):
     if flim.format in formats:
         if flim.format == 0x00:
             raise ValueError("Invalid texture format!")
@@ -361,27 +370,32 @@ def writePNG(flim):
             if (flim.format != 0x31 and flim.format != 0x431 and flim.format != 0x32 and flim.format != 0x432 and flim.format != 0x33 and flim.format != 0x433):
                 result = swizzle(flim.width, flim.height, 0, flim.format, 4, flim.swizzle, flim.pitch, flim.data, flim.dataSize)
 
-                img = QtGui.QImage(result, flim.width, flim.height, QtGui.QImage.Format_RGBA8888)
+                result = bytes(result)
+
+                im = Image.frombytes("RGBA", (flim.width, flim.height), result)
 
             else:
                 result = swizzle_BC(flim.width, flim.height, 0, flim.format, 4, flim.swizzle, flim.pitch, flim.data, flim.dataSize)
 
-                output = fetch_2d_texel_rgba_dxt(result, flim.width, flim.height, flim.format)
+                output = fetch_2d_texel_rgba_dxt(result, flim.width, flim.height, flim.format, isCMD)
 
-                img = QtGui.QImage(output, flim.width, flim.height, QtGui.QImage.Format_RGBA8888)
+                output = bytes(output)
+
+                im = Image.frombytes("RGBA", (flim.width, flim.height), output)
+                
 
     else:
         print("")
         print("Unsupported texture format: " + hex(flim.format))
-        print("Exiting in 5 seconds...")
-        time.sleep(5)
+        if not isCMD:
+            print("Exiting in 5 seconds...")
+            time.sleep(5)
         sys.exit(1)
 
-    yield img.copy(0, 0, flim.width, flim.height)
+    yield im
 
-def writeFLIM(flim, f):
+def writeFLIM(flim, f, isCMD):
     if flim.format in formats:
-        from PIL import Image
         im = Image.open(sys.argv[1])
         if (flim.format != 0x31 and flim.format != 0x431 and flim.format != 0x32 and flim.format != 0x432 and flim.format != 0x33 and flim.format != 0x433):
             data = im.convert("RGBA").tobytes()
@@ -391,22 +405,23 @@ def writeFLIM(flim, f):
 
             im.save("DDSConv/mipmap.png")
 
-            print('')
+            import struct
+
             if (gfd.format == 0x31 or gfd.format == 0x431):
-                try:
-                    os.system(os.path.dirname(os.path.abspath(__file__)) + '/nvdxt.exe -file DDSConv/mipmap.png -nomipmap -dxt1 -output DDSConv/mipmap.dds')
-                except NameError:  # We are using the built exe, not py
-                    os.system(os.path.dirname(os.path.abspath(sys.executable)) + '/nvdxt.exe -file DDSConv/mipmap.png -nomipmap -dxt1 -output DDSConv/mipmap.dds')
+                if (struct.calcsize("P") * 8) == 32:
+                    os.system('C:\\"Program Files"\Compressonator\CompressonatorCLI.exe -fd BC1 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
+                elif (struct.calcsize("P") * 8) == 64:
+                    os.system('C:\\"Program Files (x86)"\Compressonator\CompressonatorCLI.exe -fd BC1 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
             elif (gfd.format == 0x32 or gfd.format == 0x432):
-                try:
-                    os.system(os.path.dirname(os.path.abspath(__file__)) + '/nvdxt.exe -file DDSConv/mipmap.png -nomipmap -dxt3 -output DDSConv/mipmap.dds')
-                except NameError:  # We are using the built exe, not py
-                    os.system(os.path.dirname(os.path.abspath(sys.executable)) + '/nvdxt.exe -file DDSConv/mipmap.png -nomipmap -dxt3 -output DDSConv/mipmap.dds')
+                if (struct.calcsize("P") * 8) == 32:
+                    os.system('C:\\"Program Files"\Compressonator\CompressonatorCLI.exe -fd BC2 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
+                elif (struct.calcsize("P") * 8) == 64:
+                    os.system('C:\\"Program Files (x86)"\Compressonator\CompressonatorCLI.exe -fd BC2 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
             elif (gfd.format == 0x33 or gfd.format == 0x433):
-                try:
-                    os.system(os.path.dirname(os.path.abspath(__file__)) + '/nvdxt.exe -file DDSConv/mipmap.png -nomipmap -dxt5 -output DDSConv/mipmap.dds')
-                except NameError:  # We are using the built exe, not py
-                    os.system(os.path.dirname(os.path.abspath(sys.executable)) + '/nvdxt.exe -file DDSConv/mipmap.png -nomipmap -dxt5 -output DDSConv/mipmap.dds')
+                if (struct.calcsize("P") * 8) == 32:
+                    os.system('C:\\"Program Files"\Compressonator\CompressonatorCLI.exe -fd BC3 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
+                elif (struct.calcsize("P") * 8) == 64:
+                    os.system('C:\\"Program Files (x86)"\Compressonator\CompressonatorCLI.exe -fd BC3 -nomipmap DDSConv/mipmap.png DDSConv/mipmap.dds')
 
             with open('DDSConv/mipmap.dds', 'rb') as f1:
                 f2 = f1.read()
@@ -416,8 +431,9 @@ def writeFLIM(flim, f):
     else:
         print("")
         print("Unsupported texture format: " + hex(flim.format))
-        print("Exiting in 5 seconds...")
-        time.sleep(5)
+        if not isCMD:
+            print("Exiting in 5 seconds...")
+            time.sleep(5)
         sys.exit(1)
 
     swizzled_data = []
@@ -961,17 +977,18 @@ def main():
     print("BFLIM Extractor v1.1")
     print("(C) 2016 AboodXD")
     
-    if len(sys.argv) != 2:
-        if len(sys.argv) != 3:
-            print("")
-            print("Usage (If converting from .bflim to .png, and using source code): python bflim_extract.py bflim")
-            print("Usage (If converting from .bflim to .png, and using exe): bflim_extract.exe bflim")
-            print("Usage (If converting from .png to .bflim, and using source code): python bflim_extract.py input(.png) input(.bflim)")
-            print("Usage (If converting from .png to .bflim, and using exe): bflim_extract.exe input(.png) input(.bflim)")
-            print("")
-            print("Exiting in 5 seconds...")
-            time.sleep(5)
-            sys.exit(1)
+    if (len(sys.argv) == 4 and sys.argv[3] != "--cmd"):
+        if (len(sys.argv) != 3 or (len(sys.argv) == 3 and sys.argv[2] != "-cmd")):
+            if len(sys.argv) != 2:
+                print("")
+                print("Usage (If converting from .bflim to .png, and using source code): python bflim_extract.py bflim")
+                print("Usage (If converting from .bflim to .png, and using exe): bflim_extract.exe bflim")
+                print("Usage (If converting from .png to .bflim, and using source code): python bflim_extract.py input(.png) input(.bflim)")
+                print("Usage (If converting from .png to .bflim, and using exe): bflim_extract.exe input(.png) input(.bflim)")
+                print("")
+                print("Exiting in 5 seconds...")
+                time.sleep(5)
+                sys.exit(1)
     
     if sys.argv[1].endswith('.bflim'):
         with open(sys.argv[1], "rb") as inf:
@@ -985,6 +1002,17 @@ def main():
             inf.close()
     
     data = readFLIM(inb)
+
+    if len(sys.argv) == 4:
+        if sys.argv[3] == "-cmd": isCMD = True
+    elif len(sys.argv) == 3:
+        if sys.argv[2] == "-cmd":
+            isCMD = True
+            print('ya')
+        else:
+            isCMD = False
+    else:
+        isCMD = False
 
     print("")
     print("// ----- GX2Surface Info ----- ")
@@ -1002,8 +1030,8 @@ def main():
     name = os.path.splitext(sys.argv[1])[0]
 
     if sys.argv[1].endswith('.bflim'):
-        for img in writePNG(data):
-            img.save(name + ".png")
+        for im in writePNG(data, isCMD):
+            im.save(name + ".png")
             print('')
             print('Finished converting: ' + sys.argv[1])
 
@@ -1012,7 +1040,7 @@ def main():
             output = open(name + "2.bflim", 'wb+')
         else:
             output = open(name + ".bflim", 'wb+')
-        output.write(writeFLIM(data, inb))
+        output.write(writeFLIM(data, inb, isCMD))
         output.close()
         print('')
         print('Finished converting: ' + sys.argv[1])
