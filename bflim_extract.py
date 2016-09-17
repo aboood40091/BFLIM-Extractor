@@ -428,6 +428,10 @@ def writeFLIM(flim, f, isCMD):
                 f1.close()
 
             data = f2[0x80:]
+
+            for filename in os.listdir('DDSConv'):
+                os.remove(os.path.join('DDSConv', filename))
+            import shutil; shutil.rmtree('DDSConv')
     else:
         print("")
         print("Unsupported texture format: " + hex(flim.format))
