@@ -29,9 +29,10 @@ Can Also convert DDS files into .bflim files!
 
 ## Supported DDS formats:
 * ABGR8
+* BGR8
 * A2BGR10
-* BGR565
-* A1BGR5
+* RGB565
+* A1RGB5
 * ARGB4
 * L8
 * A8
