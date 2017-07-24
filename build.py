@@ -1,8 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 # BFLIM Extractor
-# Version v1.2
-# Copyright © 2016 AboodXD
+# Version v2.0
+# Copyright © 2016-2017 Stella/AboodXD
 
 # This file is part of BFLIM Extractor.
 
@@ -24,10 +25,10 @@
 import os, shutil, sys
 from cx_Freeze import setup, Executable
 
-version = 'v1.2'
+version = '2.0'
 
 # Pick a build directory
-dir_ = 'bflim_extract ' + version
+dir_ = 'bflim_extract v' + version
 
 # Add the "build" parameter to the system argument list
 if 'build' not in sys.argv:
@@ -39,19 +40,14 @@ if os.path.isdir(dir_): shutil.rmtree(dir_)
 os.makedirs(dir_)
 print('>> Directory ready!')
 
-# exclude QtWebKit to save space, plus Python stuff we don't use
-excludes = ['doctest', 'pdb', 'unittest', 'difflib', 'inspect',
-    'os2emxpath', 'posixpath', 'optpath', 'locale', 'calendar',
-    'select', 'multiprocessing', 'ssl',
-    'PyQt5.QtWebKit', 'PyQt5.QtNetwork']
-
 setup(
-    name = 'bflim_extract',
+    name = 'BFLIM Extractor',
     version = version,
-    description = 'Wii U BFLIM decoder',
+    description = 'Wii U BFLIM Extractor',
+    author = "AboodXD",
     options={
         'build_exe': {
-            'excludes': excludes,
+            'compressed': 1,
             'build_exe': dir_,
             },
         },
@@ -67,4 +63,4 @@ shutil.copy('COPYING', dir_)
 shutil.copy('README.md', dir_)
 print('>> Files copied!')
 
-print('>> BFLIM Extractor has been frozen to %s !' % dir_)
+print('>> BFLIM Extractor has been frozen to "%s"!' % dir_)

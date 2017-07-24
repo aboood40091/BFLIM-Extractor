@@ -1,0 +1,8 @@
+
+__pycache__/
+.idea/
+build/
+dist/
+build.bat
+build_addrlib_cy.bat
+*.spec

@@ -1,22 +1,51 @@
-# Wii U BFLIM Extractor
-Extracts textures from the FLIM format used in Wii U games.  
+# BFLIM Extractor v2.0
+Extracts textures from the BFLIM ('FLIM' / .bflim file extension) format used in Wii U games, and saves them as DDS.  
   
-Can Also convert .png files into .bflim files!  
+Can Also convert DDS files into .bflim files!  
 
-# Requirements:
-Python 3.4 or higher (If running from source code): https://www.python.org/download/releases/3.4.3/
+## Requirements:
+* Python 3.4 or higher.
+* Cython (Optional)
+* cx_Freeze. (Optional)
 
-Pillow (If running from source code): https://pypi.python.org/pypi/Pillow/3.3.1
+## Supported BFLIM formats:
+* GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM
+* GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_SRGB
+* GX2_SURFACE_FORMAT_TCS_R10_G10_B10_A2_UNORM
+* GX2_SURFACE_FORMAT_TCS_R5_G6_B5_UNORM
+* GX2_SURFACE_FORMAT_TC_R5_G5_B5_A1_UNORM
+* GX2_SURFACE_FORMAT_TC_R4_G4_B4_A4_UNORM
+* GX2_SURFACE_FORMAT_TC_R8_UNORM
+* GX2_SURFACE_FORMAT_TC_R8_G8_UNORM
+* GX2_SURFACE_FORMAT_TC_R4_G4_UNORM
+* GX2_SURFACE_FORMAT_T_BC1_UNORM
+* GX2_SURFACE_FORMAT_T_BC1_SRGB
+* GX2_SURFACE_FORMAT_T_BC2_UNORM
+* GX2_SURFACE_FORMAT_T_BC2_SRGB
+* GX2_SURFACE_FORMAT_T_BC3_UNORM
+* GX2_SURFACE_FORMAT_T_BC3_SRGB
+* GX2_SURFACE_FORMAT_T_BC4_UNORM
+* GX2_SURFACE_FORMAT_T_BC5_UNORM
 
-cx_Freeze (Optional, if running from source code): https://pypi.python.org/pypi/cx_Freeze/4.3.4
+## Supported DDS formats:
+* ABGR8
+* A2BGR10
+* BGR565
+* A1BGR5
+* ARGB4
+* L8
+* A8
+* A8L8
+* A4L4
+* ETC1
+* BC1
+* BC2
+* BC3
+* BC4
+* BC5
 
-Compressonator: https://github.com/GPUOpen-Tools/Compressonator/releases/tag/V2.3.2953
+## Credits:
+* Stella/AboodXD - Writing this thingy.
 
-# Supported formats:
-* RGBA32 (^l)
-* BC1 (DXT1) (^o)
-* BC2 (DXT3) (^p)
-* BC3 (DXT5) (^q)
-
-# Special thanks to:
-Exzap, AddrLib - Helping with swizzling.
+## Special thanks to:
+* Exzap, AddrLib - Helping with swizzling.
