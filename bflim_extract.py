@@ -58,7 +58,7 @@ formats = {0x00000000: 'GX2_SURFACE_FORMAT_INVALID',
            0x00000035: 'GX2_SURFACE_FORMAT_T_BC5_UNORM'
            }
 
-BCn_formats = [0x31, 0x32, 0x33, 0x34, 0x35]
+BCn_formats = [0x31, 0x431, 0x32, 0x432, 0x33, 0x433, 0x34, 0x35]
 
 # ----------\/-Start of BFLIM Extracting section-\/------------- #
 class FLIMData:
