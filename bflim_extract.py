@@ -34,6 +34,11 @@ except ImportError:
 
 import dds
 
+try:
+    import form_conv_cy as form_conv
+except ImportError:
+    import form_conv
+
 __author__ = "Stella/AboodXD"
 __copyright__ = "Copyright 2016-2017 Stella/AboodXD"
 __credits__ = ["Stella/AboodXD", "AddrLib", "Exzap"]
@@ -299,6 +304,11 @@ def get_deswizzled_data(flim):
 
     result = result[:size]
 
+    if flim.format == 0xa:
+        result = form_conv.toDDSrgb5a1(result)
+    elif flim.format == 0xb:
+        result = form_conv.toDDSrgba4(result)
+
     hdr = dds.generateHeader(1, flim.width, flim.height, format_, flim.compSel, size, flim.format in BCn_formats)
 
     return hdr, result
@@ -520,17 +530,17 @@ def main():
         flim = readFLIM(inb)
 
         print("")
-        print("  width     = " + str(flim.width))
-        print("  height    = " + str(flim.height))
+        print("  width           = " + str(flim.width))
+        print("  height          = " + str(flim.height))
         if flim.format in formats:
-            print("  format    = " + formats[flim.format])
+            print("  format          = " + formats[flim.format])
         else:
-            print("  format    = " + hex(flim.format))
-        print("  imageSize = " + str(flim.imageSize))
-        print("  tileMode  = " + str(flim.tileMode))
-        print("  swizzle   = " + str(flim.swizzle) + ", " + hex(flim.swizzle))
-        print("  alignment = " + str(flim.alignment))
-        print("  pitch     = " + str(flim.pitch))
+            print("  format          = " + hex(flim.format))
+        print("  imageSize       = " + str(flim.imageSize))
+        print("  tileMode        = " + str(flim.tileMode))
+        print("  swizzle         = " + str(flim.swizzle) + ", " + hex(flim.swizzle))
+        print("  alignment       = " + str(flim.alignment))
+        print("  pitch           = " + str(flim.pitch))
         bpp = addrlib.surfaceGetBitsPerPixel(flim.format)
         print("")
         print("  bits per pixel  = " + str(bpp))
