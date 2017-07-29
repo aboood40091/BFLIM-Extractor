@@ -238,14 +238,7 @@ def readFLIM(f):
 
     flim.alignment = info.alignment
 
-    if flim.format in BCn_formats:
-        width = (flim.width + 3) // 4
-        height = (flim.height + 3) // 4
-    else:
-        width = flim.width
-        height = flim.height
-
-    surfOut = addrlib.getSurfaceInfo(flim.format, width, height, 1, 1, flim.tileMode, 0, 0)
+    surfOut = addrlib.getSurfaceInfo(flim.format, flim.width, flim.height, 1, 1, flim.tileMode, 0, 0)
 
     if surfOut.depth != 1:
         print("")
@@ -320,18 +313,11 @@ def warn_color():
 def writeFLIM(f, tileMode, swizzle_, SRGB):
     width, height, format_, fourcc, dataSize, compSel, data = dds.readDDS(f, SRGB)
 
-    if format_ in BCn_formats:
-        width_ = (width + 3) >> 2
-        height_ = (height + 3) >> 2
-    else:
-        width_ = width
-        height_ = height
-
     bpp = addrlib.surfaceGetBitsPerPixel(format_) >> 3
 
     alignment = 512 * bpp
 
-    surfOut = addrlib.getSurfaceInfo(format_, width_, height_, 1, 1, tileMode, 0, 0)
+    surfOut = addrlib.getSurfaceInfo(format_, width, height, 1, 1, tileMode, 0, 0)
 
     padSize = surfOut.surfSize - dataSize
     data += padSize * b"\x00"
