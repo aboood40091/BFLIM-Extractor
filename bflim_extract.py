@@ -143,27 +143,27 @@ def readFLIM(f):
 
     if info.format_ == 0x00:
         flim.format = 0x01
-        flim.compSel = [0, 4, 4, 4]
+        flim.compSel = [0, 0, 0, 5]
 
     elif info.format_ == 0x01:
         flim.format = 0x01
-        flim.compSel = [4, 4, 4, 3]
+        flim.compSel = [4, 4, 4, 0]
 
     elif info.format_ == 0x02:
         flim.format = 0x02
-        flim.compSel = [0, 4, 4, 3]
+        flim.compSel = [0, 0, 0, 1]
 
     elif info.format_ == 0x03:
         flim.format = 0x07
-        flim.compSel = [0, 4, 4, 3]
+        flim.compSel = [0, 0, 0, 1]
 
     elif info.format_ in [0x05, 0x19]:
         flim.format = 0x08
-        flim.compSel = [0, 1, 2, 4]
+        flim.compSel = [0, 1, 2, 5]
 
     elif info.format_ == 0x06:
         flim.format = 0x1a
-        flim.compSel = [0, 1, 2, 4]
+        flim.compSel = [0, 1, 2, 5]
 
     elif info.format_ == 0x07:
         flim.format = 0x0a
@@ -311,7 +311,14 @@ def warn_color():
     print("Warning: colors might mess up!!")
 
 def writeFLIM(f, tileMode, swizzle_, SRGB):
-    width, height, format_, fourcc, dataSize, compSel, data = dds.readDDS(f, SRGB)
+    width, height, format_, fourcc, dataSize, compSel, numMips, data = dds.readDDS(f, SRGB)
+
+    if 0 in [width, dataSize] and data == []:
+        print("Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit(1)
+
+    data = data[:dataSize]
 
     bpp = addrlib.surfaceGetBitsPerPixel(format_) >> 3
 
@@ -362,7 +369,7 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
             format_ = 0
 
     elif format_ == 0x1a:
-        if 4 in compSel:
+        if 5 in compSel:
             format_ = 6
         else:
             format_ = 9
@@ -378,26 +385,24 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
         format_ = fmt[format_]
 
     if format_ == 0:
-        if compSel not in [[0, 0, 0, 4], [0, 4, 4, 4]]:
+        if compSel not in [[0, 0, 0, 5], [0, 4, 4, 5]]:
             warn_color()
 
     elif format_ == 1:
-        if compSel != [4, 4, 4, 3]:
+        if compSel != [4, 4, 4, 5]:
             warn_color()
 
     elif format_ in [2, 3]:
-        if compSel not in [[0, 0, 0, 3], [0, 4, 4, 3]]:
+        if compSel not in [[0, 0, 0, 1], [0, 4, 4, 1]]:
             warn_color()
 
     elif format_ in [5, 6]:
-        if compSel != [0, 1, 2, 4]:
+        if compSel != [0, 1, 2, 5]:
             warn_color()
 
     else:
         if compSel != [0, 1, 2, 3]:
             warn_color()
-
-    # elif info.format_ == 0x0a
 
     head_struct = FLIMHeader('>')
     head = head_struct.pack(b"FLIM", 0xFEFF, 0x14, 0x2020000, len(swizzled_data) + 0x28, 1)
