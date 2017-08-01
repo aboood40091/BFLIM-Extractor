@@ -147,7 +147,7 @@ def readFLIM(f):
 
     elif info.format_ == 0x01:
         flim.format = 0x01
-        flim.compSel = [4, 4, 4, 0]
+        flim.compSel = [5, 5, 5, 0]
 
     elif info.format_ == 0x02:
         flim.format = 0x02
