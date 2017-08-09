@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # BFLIM Extractor
-# Version v2.0
+# Version v2.1
 # Copyright © 2016-2017 Stella/AboodXD
 
 # This file is part of BFLIM Extractor.

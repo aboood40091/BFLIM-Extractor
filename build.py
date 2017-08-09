@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # BFLIM Extractor
-# Version v2.0
+# Version v2.1
 # Copyright © 2016-2017 Stella/AboodXD
 
 # This file is part of BFLIM Extractor.
@@ -25,7 +25,7 @@
 import os, shutil, sys
 from cx_Freeze import setup, Executable
 
-version = '2.0'
+version = '2.1'
 
 # Pick a build directory
 dir_ = 'bflim_extract v' + version
