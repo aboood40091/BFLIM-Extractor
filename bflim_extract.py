@@ -318,6 +318,13 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
         time.sleep(5)
         sys.exit(1)
 
+    if format_ not in formats:
+        print("")
+        print("Unsupported DDS format!")
+        print("Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit(1)
+
     data = data[:dataSize]
 
     bpp = addrlib.surfaceGetBitsPerPixel(format_) >> 3
@@ -469,7 +476,7 @@ def printInfo():
     sys.exit(1)
 
 def main():
-    print("BFLIM Extractor v2.0")
+    print("BFLIM Extractor v2.1")
     print("(C) 2016-2017 Stella/AboodXD")
     
     input_ = sys.argv[-1]
