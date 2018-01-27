@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # BFLIM Extractor
-# Version v2.1
-# Copyright © 2016-2017 Stella/AboodXD
+# Version v2.2
+# Copyright © 2016-2018 AboodXD
 
 # This file is part of BFLIM Extractor.
 
@@ -22,10 +22,13 @@
 
 """build.py: Build an executable for BFLIM Extractor."""
 
-import os, shutil, sys
+import os
+import shutil
+import sys
+
 from cx_Freeze import setup, Executable
 
-version = '2.1'
+version = '2.2'
 
 # Pick a build directory
 dir_ = 'bflim_extract v' + version
@@ -36,27 +39,31 @@ if 'build' not in sys.argv:
 
 # Clear the directory
 print('>> Clearing/creating directory...')
-if os.path.isdir(dir_): shutil.rmtree(dir_)
+
+if os.path.isdir(dir_):
+    shutil.rmtree(dir_)
+
 os.makedirs(dir_)
+
 print('>> Directory ready!')
 
 setup(
-    name = 'BFLIM Extractor',
-    version = version,
-    description = 'Wii U BFLIM Extractor',
-    author = "AboodXD",
+    name='BFLIM Extractor',
+    version=version,
+    description='Wii U BFLIM Extractor',
+    author="AboodXD",
     options={
         'build_exe': {
             'compressed': 1,
             'build_exe': dir_,
-            },
         },
-    executables = [
+    },
+    executables=[
         Executable(
             'bflim_extract.py',
-            ),
-        ],
-    )
+        ),
+    ],
+)
 
 print('>> Attempting to copy required files...')
 shutil.copy('COPYING', dir_)

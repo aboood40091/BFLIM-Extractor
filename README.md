@@ -1,4 +1,4 @@
-# BFLIM Extractor v2.1
+# BFLIM Extractor v2.2
 Extracts textures from the BFLIM ('FLIM' / .bflim file extension) format used in Wii U games, and saves them as DDS.  
   
 Can Also convert DDS files into .bflim files!  

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # BFLIM Extractor
-# Version v2.1
-# Copyright © 2016-2017 Stella/AboodXD
+# Version v2.2
+# Copyright © 2016-2018 AboodXD
 
 # This file is part of BFLIM Extractor.
 
@@ -27,21 +27,12 @@ import struct
 import sys
 import time
 
-try:
-    import addrlib_cy as addrlib
-except ImportError:
-    import addrlib
-
+import addrlib
 import dds
 
-try:
-    import form_conv_cy as form_conv
-except ImportError:
-    import form_conv
-
-__author__ = "Stella/AboodXD"
-__copyright__ = "Copyright 2016-2017 Stella/AboodXD"
-__credits__ = ["Stella/AboodXD", "AddrLib", "Exzap"]
+__author__ = "AboodXD"
+__copyright__ = "Copyright 2016-2018 AboodXD"
+__credits__ = ["AboodXD", "AddrLib", "Exzap"]
 
 formats = {0x00000000: 'GX2_SURFACE_FORMAT_INVALID',
            0x0000001a: 'GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM',
@@ -65,9 +56,11 @@ formats = {0x00000000: 'GX2_SURFACE_FORMAT_INVALID',
 
 BCn_formats = [0x31, 0x431, 0x32, 0x432, 0x33, 0x433, 0x34, 0x35]
 
+
 # ----------\/-Start of BFLIM Extracting section-\/------------- #
 class FLIMData:
     pass
+
 
 class FLIMHeader(struct.Struct):
     def __init__(self, bom):
@@ -75,11 +68,12 @@ class FLIMHeader(struct.Struct):
 
     def data(self, data, pos):
         (self.magic,
-        self.endian,
-        self.size_,
-        self.version,
-        self.fileSize,
-        self.numBlocks) = self.unpack_from(data, pos)
+         self.endian,
+         self.size_,
+         self.version,
+         self.fileSize,
+         self.numBlocks) = self.unpack_from(data, pos)
+
 
 class imagHeader(struct.Struct):
     def __init__(self, bom):
@@ -87,46 +81,50 @@ class imagHeader(struct.Struct):
 
     def data(self, data, pos):
         (self.magic,
-        self.infoSize,
-        self.width,
-        self.height,
-        self.alignment,
-        self.format_,
-        self.swizzle_tileMode,
-        self.imageSize) = self.unpack_from(data, pos)
+         self.infoSize,
+         self.width,
+         self.height,
+         self.alignment,
+         self.format_,
+         self.swizzle_tileMode,
+         self.imageSize) = self.unpack_from(data, pos)
+
 
 def computeSwizzleTileMode(z):
-    if type(z) == int:
+    if isinstance(z, int):
         z = bin(z)[2:].zfill(8)
 
         tileMode = int(z[3:], 2)
 
         if tileMode in [1, 2, 3, 16]:
             s = 0
+
         else:
-            s = 0xd0000 
+            s = 0xd0000
+
         s |= int(z[:3], 2) << 8
 
         return s, tileMode
 
-    if type(z) == tuple:
+    if isinstance(z, tuple):
         z = bin(z[0])[2:].zfill(3) + bin(z[1])[2:].zfill(5)
         return int(z, 2)
-        
+
 
 def readFLIM(f):
     flim = FLIMData()
 
     pos = len(f) - 0x28
 
-    if f[pos+4:pos+6] == b'\xFF\xFE':
+    if f[pos + 4:pos + 6] == b'\xFF\xFE':
         bom = '<'
-    elif f[pos+4:pos+6] == b'\xFE\xFF':
+
+    elif f[pos + 4:pos + 6] == b'\xFE\xFF':
         bom = '>'
 
     header = FLIMHeader(bom)
     header.data(f, pos)
-    
+
     if header.magic != b'FLIM':
         raise ValueError("Invalid file header!")
 
@@ -254,61 +252,81 @@ def readFLIM(f):
     flim.surfOut = surfOut
 
     if flim.format in BCn_formats:
-        flim.realSize = ((flim.width + 3) >> 2) * ((flim.height + 3) >> 2) * (addrlib.surfaceGetBitsPerPixel(flim.format) // 8)
+        flim.realSize = ((flim.width + 3) >> 2) * ((flim.height + 3) >> 2) * (
+            addrlib.surfaceGetBitsPerPixel(flim.format) // 8)
+
     else:
         flim.realSize = flim.width * flim.height * (addrlib.surfaceGetBitsPerPixel(flim.format) // 8)
 
     return flim
 
+
 def get_deswizzled_data(flim):
     if flim.format == 0x01:
         format_ = 61
+
     elif flim.format == 0x02:
         format_ = 112
+
     elif flim.format == 0x07:
         format_ = 49
+
     elif flim.format == 0x08:
         format_ = 85
+
     elif flim.format == 0x0a:
         format_ = 86
+
     elif flim.format == 0x0b:
         format_ = 115
+
     elif flim.format in [0x1a, 0x41a]:
         format_ = 28
+
     elif flim.format == 0x19:
         format_ = 24
+
     elif flim.format in [0x31, 0x431]:
         format_ = flim.format_
+
     elif flim.format in [0x32, 0x432]:
         format_ = "BC2"
+
     elif flim.format in [0x33, 0x433]:
         format_ = "BC3"
+
     elif flim.format == 0x34:
         format_ = "BC4U"
+
     elif flim.format == 0x35:
         format_ = "BC5U"
 
-    result = addrlib.deswizzle(flim.width, flim.height, flim.surfOut.height, flim.format, flim.surfOut.tileMode, flim.swizzle, flim.pitch, flim.surfOut.bpp, flim.data)
+    result = addrlib.deswizzle(flim.width, flim.height, flim.surfOut.height, flim.format, flim.surfOut.tileMode,
+                               flim.swizzle, flim.pitch, flim.surfOut.bpp, flim.data)
 
     if flim.format in BCn_formats:
         size = ((flim.width + 3) >> 2) * ((flim.height + 3) >> 2) * (addrlib.surfaceGetBitsPerPixel(flim.format) >> 3)
+
     else:
         size = flim.width * flim.height * (addrlib.surfaceGetBitsPerPixel(flim.format) >> 3)
 
     result = result[:size]
 
     if flim.format == 0xa:
-        result = form_conv.toDDSrgb5a1(result)
+        result = dds.form_conv.toDDSrgb5a1(result)
+
     elif flim.format == 0xb:
-        result = form_conv.toDDSrgba4(result)
+        result = dds.form_conv.toDDSrgba4(result)
 
     hdr = dds.generateHeader(1, flim.width, flim.height, format_, flim.compSel, size, flim.format in BCn_formats)
 
     return hdr, result
 
+
 def warn_color():
     print("")
     print("Warning: colors might mess up!!")
+
 
 def writeFLIM(f, tileMode, swizzle_, SRGB):
     width, height, format_, fourcc, dataSize, compSel, numMips, data = dds.readDDS(f, SRGB)
@@ -348,6 +366,7 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
 
     if tileMode in [1, 2, 3, 16]:
         s = 0
+
     else:
         s = 0xd0000
 
@@ -367,59 +386,101 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
     print("  bytes per pixel = " + str(bpp))
     print("  realSize        = " + str(dataSize))
 
-    swizzled_data = addrlib.swizzle(width, height, surfOut.height, format_, surfOut.tileMode, s, surfOut.pitch, surfOut.bpp, data)
+    swizzled_data = addrlib.swizzle(width, height, surfOut.height, format_, surfOut.tileMode, s, surfOut.pitch,
+                                    surfOut.bpp, data)
 
     if format_ == 1:
-        if 3 in compSel:
+        if compSel[3] == 0:
             format_ = 1
+
         else:
             format_ = 0
 
     elif format_ == 0x1a:
         if 5 in compSel:
             format_ = 6
+
         else:
             format_ = 9
 
     elif format_ == 0x31:
         if fourcc == b'ETC1':
             format_ = 0xa
+
         else:
             format_ = 0xc
 
     else:
-        fmt = {7: 3, 8: 5, 0xa: 7, 0xb: 8, 0x32: 0xd, 0x33: 0xe, 0x34: 0x10, 0x35: 0x11, 0x41a: 0x14, 0x431: 0x15, 0x432: 0x16, 0x433: 0x17, 0x19: 0x18}
+        fmt = {
+            2: 2,
+            7: 3,
+            8: 5,
+            0xa: 7,
+            0xb: 8,
+            0x32: 0xd,
+            0x33: 0xe,
+            0x34: 0x10,
+            0x35: 0x11,
+            0x41a: 0x14,
+            0x431: 0x15,
+            0x432: 0x16,
+            0x433: 0x17,
+            0x19: 0x18,
+        }
+
         format_ = fmt[format_]
 
     if format_ == 0:
-        if compSel not in [[0, 0, 0, 5], [0, 4, 4, 5]]:
+        if compSel not in [[0, 0, 0, 5], [0, 5, 5, 5]]:
             warn_color()
 
     elif format_ == 1:
-        if compSel != [4, 4, 4, 5]:
+        if compSel != [5, 5, 5, 0]:
             warn_color()
 
     elif format_ in [2, 3]:
-        if compSel not in [[0, 0, 0, 1], [0, 4, 4, 1]]:
+        if compSel not in [[0, 0, 0, 1], [0, 5, 5, 1]]:
             warn_color()
 
-    elif format_ in [5, 6]:
+    elif format_ == 5:
         if compSel != [0, 1, 2, 5]:
             warn_color()
 
-    else:
+    elif format_ == 6:
+        if compSel != [0, 1, 2, 5]:
+            if compSel == [2, 1, 0, 5]:
+                swizzled_data = dds.form_conv.swapRB_RGBA8(swizzled_data)
+
+            else:
+                warn_color()
+
+    elif format_ in [7, 8]:
         if compSel != [0, 1, 2, 3]:
             warn_color()
+
+    elif format_ in [9, 0x14, 0x18]:
+        if compSel != [0, 1, 2, 3]:
+            if compSel == [2, 1, 0, 3]:
+                if format_ == 0x18:
+                    swizzled_data = dds.form_conv.swapRB_RGB10A2(swizzled_data)
+
+                else:
+                    swizzled_data = dds.form_conv.swapRB_RGBA8(swizzled_data)
+
+            else:
+                warn_color()
 
     head_struct = FLIMHeader('>')
     head = head_struct.pack(b"FLIM", 0xFEFF, 0x14, 0x2020000, len(swizzled_data) + 0x28, 1)
 
     img_head_struct = imagHeader('>')
-    imag_head = img_head_struct.pack(b"imag", 16, width, height, alignment, format_, swizzle_tileMode, len(swizzled_data))
+    imag_head = img_head_struct.pack(b"imag", 16, width, height, alignment, format_, swizzle_tileMode,
+                                     len(swizzled_data))
 
     output = swizzled_data + head + imag_head
 
     return output
+
 
 def printInfo():
     print("")
@@ -427,7 +488,8 @@ def printInfo():
     print("  bflim_extract [option...] input")
     print("")
     print("Options:")
-    print(" -o <output>           Output file, if not specified, the output file will have the same name as the intput file")
+    print(
+        " -o <output>           Output file, if not specified, the output file will have the same name as the intput file")
     print("")
     print("DDS to BFLIM options:")
     print(" -tileMode <tileMode>  tileMode (4 is the default)")
@@ -475,10 +537,11 @@ def printInfo():
     time.sleep(5)
     sys.exit(1)
 
+
 def main():
-    print("BFLIM Extractor v2.1")
-    print("(C) 2016-2017 Stella/AboodXD")
-    
+    print("BFLIM Extractor v2.2")
+    print("(C) 2016-2018 AboodXD")
+
     input_ = sys.argv[-1]
 
     if not (input_.endswith('.bflim') or input_.endswith('.dds')):
@@ -491,6 +554,7 @@ def main():
 
     if "-o" in sys.argv:
         output_ = sys.argv[sys.argv.index("-o") + 1]
+
     else:
         output_ = os.path.splitext(input_)[0] + (".bflim" if toFLIM else ".dds")
 
@@ -500,16 +564,19 @@ def main():
     if toFLIM:
         if "-tileMode" in sys.argv:
             tileMode = int(sys.argv[sys.argv.index("-tileMode") + 1], 0)
+
         else:
             tileMode = 4
 
         if "-swizzle" in sys.argv:
             swizzle = int(sys.argv[sys.argv.index("-swizzle") + 1], 0)
+
         else:
             swizzle = 0
 
         if "-SRGB" in sys.argv:
             SRGB = int(sys.argv[sys.argv.index("-SRGB") + 1], 0)
+
         else:
             SRGB = 0
 
@@ -530,22 +597,25 @@ def main():
         print("")
         print("  width           = " + str(flim.width))
         print("  height          = " + str(flim.height))
+
         if flim.format in formats:
             print("  format          = " + formats[flim.format])
+
         else:
             print("  format          = " + hex(flim.format))
+
         print("  imageSize       = " + str(flim.imageSize))
         print("  tileMode        = " + str(flim.tileMode))
         print("  swizzle         = " + str(flim.swizzle) + ", " + hex(flim.swizzle))
         print("  alignment       = " + str(flim.alignment))
         print("  pitch           = " + str(flim.pitch))
+
         bpp = addrlib.surfaceGetBitsPerPixel(flim.format)
+
         print("")
         print("  bits per pixel  = " + str(bpp))
         print("  bytes per pixel = " + str(bpp // 8))
         print("  realSize        = " + str(flim.realSize))
-        
-        name = os.path.splitext(sys.argv[1])[0]
 
         hdr, data = get_deswizzled_data(flim)
 
@@ -556,4 +626,6 @@ def main():
     print('')
     print('Finished converting: ' + output_)
 
-if __name__ == '__main__': main()
+
+if __name__ == '__main__':
+    main()
