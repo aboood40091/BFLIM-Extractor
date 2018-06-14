@@ -157,7 +157,7 @@ def readFLIM(f):
 
     elif info.format_ in [0x05, 0x19]:
         flim.format = 0x08
-        flim.compSel = [0, 1, 2, 5]
+        flim.compSel = [2, 1, 0, 5]
 
     elif info.format_ == 0x06:
         flim.format = 0x1a
@@ -165,11 +165,11 @@ def readFLIM(f):
 
     elif info.format_ == 0x07:
         flim.format = 0x0a
-        flim.compSel = [0, 1, 2, 3]
+        flim.compSel = [2, 1, 0, 3]
 
     elif info.format_ == 0x08:
         flim.format = 0x0b
-        flim.compSel = [0, 1, 2, 3]
+        flim.compSel = [2, 1, 0, 3]
 
     elif info.format_ == 0x09:
         flim.format = 0x1a
@@ -312,12 +312,6 @@ def get_deswizzled_data(flim):
 
     result = result[:size]
 
-    if flim.format == 0xa:
-        result = dds.form_conv.toDDSrgb5a1(result)
-
-    elif flim.format == 0xb:
-        result = dds.form_conv.toDDSrgba4(result)
-
     hdr = dds.generateHeader(1, flim.width, flim.height, format_, flim.compSel, size, flim.format in BCn_formats)
 
     return hdr, result
@@ -344,6 +338,9 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
         sys.exit(1)
 
     data = data[:dataSize]
+
+    if format_ == 0xb:
+        data = dds.form_conv.rgba4_to_argb4(data)
 
     bpp = addrlib.surfaceGetBitsPerPixel(format_) >> 3
 
@@ -443,29 +440,41 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
             warn_color()
 
     elif format_ == 5:
-        if compSel != [0, 1, 2, 5]:
-            warn_color()
+        if compSel != [2, 1, 0, 5]:
+            if compSel == [0, 1, 2, 5]:
+                swizzled_data = dds.form_conv.swapRB_16bpp(swizzled_data, 'rgb565')
+
+            else:
+                warn_color()
 
     elif format_ == 6:
         if compSel != [0, 1, 2, 5]:
             if compSel == [2, 1, 0, 5]:
-                swizzled_data = dds.form_conv.swapRB_RGBA8(swizzled_data)
+                swizzled_data = dds.form_conv.swapRB_32bpp(swizzled_data, 'rgba8')
 
             else:
                 warn_color()
 
     elif format_ in [7, 8]:
-        if compSel != [0, 1, 2, 3]:
-            warn_color()
+        if compSel != [2, 1, 0, 3]:
+            if compSel == [0, 1, 2, 3]:
+                if format_ == 8:
+                    swizzled_data = dds.form_conv.swapRB_16bpp(swizzled_data, 'argb4')
+
+                else:
+                    swizzled_data = dds.form_conv.swapRB_16bpp(swizzled_data, 'rgb5a1')
+
+            else:
+                warn_color()
 
     elif format_ in [9, 0x14, 0x18]:
         if compSel != [0, 1, 2, 3]:
             if compSel == [2, 1, 0, 3]:
                 if format_ == 0x18:
-                    swizzled_data = dds.form_conv.swapRB_RGB10A2(swizzled_data)
+                    swizzled_data = dds.form_conv.swapRB_32bpp(swizzled_data, 'bgr10a2')
 
                 else:
-                    swizzled_data = dds.form_conv.swapRB_RGBA8(swizzled_data)
+                    swizzled_data = dds.form_conv.swapRB_32bpp(swizzled_data, 'rgba8')
 
             else:
                 warn_color()
