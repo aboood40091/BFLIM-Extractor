@@ -165,7 +165,7 @@ def readFLIM(f):
 
     elif info.format_ == 0x07:
         flim.format = 0x0a
-        flim.compSel = [2, 1, 0, 3]
+        flim.compSel = [0, 1, 2, 3]
 
     elif info.format_ == 0x08:
         flim.format = 0x0b
@@ -455,14 +455,18 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
             else:
                 warn_color()
 
-    elif format_ in [7, 8]:
+    elif format_ == 7:
+        if compSel != [0, 1, 2, 3]:
+            if compSel == [2, 1, 0, 3]:
+                swizzled_data = dds.form_conv.swapRB_16bpp(swizzled_data, 'rgb5a1')
+
+            else:
+                warn_color()
+
+    elif format_ == 8:
         if compSel != [2, 1, 0, 3]:
             if compSel == [0, 1, 2, 3]:
-                if format_ == 8:
-                    swizzled_data = dds.form_conv.swapRB_16bpp(swizzled_data, 'argb4')
-
-                else:
-                    swizzled_data = dds.form_conv.swapRB_16bpp(swizzled_data, 'rgb5a1')
+                swizzled_data = dds.form_conv.swapRB_16bpp(swizzled_data, 'argb4')
 
             else:
                 warn_color()
