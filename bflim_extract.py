@@ -344,9 +344,8 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
 
     bpp = addrlib.surfaceGetBitsPerPixel(format_) >> 3
 
-    alignment = 512 * bpp
-
     surfOut = addrlib.getSurfaceInfo(format_, width, height, 1, 1, tileMode, 0, 0)
+    alignment = surfOut.baseAlign
 
     padSize = surfOut.surfSize - dataSize
     data += padSize * b"\x00"
