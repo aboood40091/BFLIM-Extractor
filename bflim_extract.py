@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # BFLIM Extractor
-# Version v2.2
-# Copyright © 2016-2018 AboodXD
+# Version v2.3
+# Copyright © 2016-2019 AboodXD
 
 # This file is part of BFLIM Extractor.
 
@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""bflim_extract.py: Decode BFLIM images."""
+"""bflim_extract.py: Decode and encode BFLIM files."""
 
 import os
 import struct
@@ -31,33 +31,33 @@ import addrlib
 import dds
 
 __author__ = "AboodXD"
-__copyright__ = "Copyright 2016-2018 AboodXD"
-__credits__ = ["AboodXD", "AddrLib", "Exzap"]
+__copyright__ = "Copyright 2016-2019 AboodXD"
+__credits__ = ["AboodXD", "AMD", "Exzap"]
 
-formats = {0x00000000: 'GX2_SURFACE_FORMAT_INVALID',
-           0x0000001a: 'GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM',
-           0x0000041a: 'GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_SRGB',
-           0x00000019: 'GX2_SURFACE_FORMAT_TCS_R10_G10_B10_A2_UNORM',
-           0x00000008: 'GX2_SURFACE_FORMAT_TCS_R5_G6_B5_UNORM',
-           0x0000000a: 'GX2_SURFACE_FORMAT_TC_R5_G5_B5_A1_UNORM',
-           0x0000000b: 'GX2_SURFACE_FORMAT_TC_R4_G4_B4_A4_UNORM',
-           0x00000001: 'GX2_SURFACE_FORMAT_TC_R8_UNORM',
-           0x00000007: 'GX2_SURFACE_FORMAT_TC_R8_G8_UNORM',
-           0x00000002: 'GX2_SURFACE_FORMAT_TC_R4_G4_UNORM',
-           0x00000031: 'GX2_SURFACE_FORMAT_T_BC1_UNORM',
-           0x00000431: 'GX2_SURFACE_FORMAT_T_BC1_SRGB',
-           0x00000032: 'GX2_SURFACE_FORMAT_T_BC2_UNORM',
-           0x00000432: 'GX2_SURFACE_FORMAT_T_BC2_SRGB',
-           0x00000033: 'GX2_SURFACE_FORMAT_T_BC3_UNORM',
-           0x00000433: 'GX2_SURFACE_FORMAT_T_BC3_SRGB',
-           0x00000034: 'GX2_SURFACE_FORMAT_T_BC4_UNORM',
-           0x00000035: 'GX2_SURFACE_FORMAT_T_BC5_UNORM'
-           }
+formats = {
+    0x00000000: 'GX2_SURFACE_FORMAT_INVALID',
+    0x0000001a: 'GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM',
+    0x0000041a: 'GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_SRGB',
+    0x00000019: 'GX2_SURFACE_FORMAT_TCS_R10_G10_B10_A2_UNORM',
+    0x00000008: 'GX2_SURFACE_FORMAT_TCS_R5_G6_B5_UNORM',
+    0x0000000a: 'GX2_SURFACE_FORMAT_TC_R5_G5_B5_A1_UNORM',
+    0x0000000b: 'GX2_SURFACE_FORMAT_TC_R4_G4_B4_A4_UNORM',
+    0x00000001: 'GX2_SURFACE_FORMAT_TC_R8_UNORM',
+    0x00000007: 'GX2_SURFACE_FORMAT_TC_R8_G8_UNORM',
+    0x00000002: 'GX2_SURFACE_FORMAT_TC_R4_G4_UNORM',
+    0x00000031: 'GX2_SURFACE_FORMAT_T_BC1_UNORM',
+    0x00000431: 'GX2_SURFACE_FORMAT_T_BC1_SRGB',
+    0x00000032: 'GX2_SURFACE_FORMAT_T_BC2_UNORM',
+    0x00000432: 'GX2_SURFACE_FORMAT_T_BC2_SRGB',
+    0x00000033: 'GX2_SURFACE_FORMAT_T_BC3_UNORM',
+    0x00000433: 'GX2_SURFACE_FORMAT_T_BC3_SRGB',
+    0x00000034: 'GX2_SURFACE_FORMAT_T_BC4_UNORM',
+    0x00000035: 'GX2_SURFACE_FORMAT_T_BC5_UNORM',
+}
 
 BCn_formats = [0x31, 0x431, 0x32, 0x432, 0x33, 0x433, 0x34, 0x35]
 
 
-# ----------\/-Start of BFLIM Extracting section-\/------------- #
 class FLIMData:
     pass
 
@@ -90,25 +90,16 @@ class imagHeader(struct.Struct):
          self.imageSize) = self.unpack_from(data, pos)
 
 
-def computeSwizzleTileMode(z):
-    if isinstance(z, int):
-        z = bin(z)[2:].zfill(8)
+def computeSwizzleTileMode(tileModeAndSwizzlePattern):
+    if isinstance(tileModeAndSwizzlePattern, int):
+        tileMode = tileModeAndSwizzlePattern & 0x1F
+        swizzlePattern = ((tileModeAndSwizzlePattern >> 5) & 7) << 8
+        if tileMode not in [1, 2, 3, 16]:
+            swizzlePattern |= 0xd0000
 
-        tileMode = int(z[3:], 2)
+        return swizzlePattern, tileMode
 
-        if tileMode in [1, 2, 3, 16]:
-            s = 0
-
-        else:
-            s = 0xd0000
-
-        s |= int(z[:3], 2) << 8
-
-        return s, tileMode
-
-    if isinstance(z, tuple):
-        z = bin(z[0])[2:].zfill(3) + bin(z[1])[2:].zfill(5)
-        return int(z, 2)
+    return tileModeAndSwizzlePattern[0] << 5 | tileModeAndSwizzlePattern[1]  # swizzlePattern << 5 | tileMode
 
 
 def readFLIM(f):
@@ -233,12 +224,22 @@ def readFLIM(f):
 
     # Calculate swizzle and tileMode
     flim.swizzle, flim.tileMode = computeSwizzleTileMode(info.swizzle_tileMode)
+    if not 1 <= flim.tileMode <= 16:
+            print("")
+            print("Invalid tileMode!")
+            print("Exiting in 5 seconds...")
+            time.sleep(5)
+            sys.exit(1)
 
     flim.alignment = info.alignment
 
     surfOut = addrlib.getSurfaceInfo(flim.format, flim.width, flim.height, 1, 1, flim.tileMode, 0, 0)
 
-    if surfOut.depth != 1:
+    tilingDepth = surfOut.depth
+    if surfOut.tileMode == 3:
+        tilingDepth //= 4
+
+    if tilingDepth != 1:
         print("")
         print("Unsupported depth!")
         print("Exiting in 5 seconds...")
@@ -301,8 +302,8 @@ def get_deswizzled_data(flim):
     elif flim.format == 0x35:
         format_ = "BC5U"
 
-    result = addrlib.deswizzle(flim.width, flim.height, flim.surfOut.height, flim.format, flim.surfOut.tileMode,
-                               flim.swizzle, flim.pitch, flim.surfOut.bpp, flim.data)
+    result = addrlib.deswizzle(flim.width, flim.height, 1, flim.format, 0, 1, flim.surfOut.tileMode,
+                               flim.swizzle, flim.pitch, flim.surfOut.bpp, 0, 0, flim.data)
 
     if flim.format in BCn_formats:
         size = ((flim.width + 3) >> 2) * ((flim.height + 3) >> 2) * (addrlib.surfaceGetBitsPerPixel(flim.format) >> 3)
@@ -342,6 +343,9 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
     if format_ == 0xb:
         data = dds.form_conv.rgba4_to_argb4(data)
 
+    if not tileMode:
+        tileMode = addrlib.getDefaultGX2TileMode(1, width, height, 1, format_, 0, 1)
+
     bpp = addrlib.surfaceGetBitsPerPixel(format_) >> 3
 
     surfOut = addrlib.getSurfaceInfo(format_, width, height, 1, 1, tileMode, 0, 0)
@@ -350,23 +354,22 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
     padSize = surfOut.surfSize - dataSize
     data += padSize * b"\x00"
 
-    if surfOut.depth != 1:
+    tilingDepth = surfOut.depth
+    if surfOut.tileMode == 3:
+        tilingDepth //= 4
+
+    if tilingDepth != 1:
         print("")
         print("Unsupported depth!")
         print("Exiting in 5 seconds...")
         time.sleep(5)
         sys.exit(1)
 
-    z = (swizzle_, tileMode)
-    swizzle_tileMode = computeSwizzleTileMode(z)
+    swizzle_tileMode = computeSwizzleTileMode((swizzle_, tileMode))
 
-    if tileMode in [1, 2, 3, 16]:
-        s = 0
-
-    else:
-        s = 0xd0000
-
-    s |= swizzle_ << 8
+    s = swizzle_ << 8
+    if tileMode not in [1, 2, 3, 16]:
+        s |= 0xd0000
 
     print("")
     print("  width           = " + str(width))
@@ -382,8 +385,8 @@ def writeFLIM(f, tileMode, swizzle_, SRGB):
     print("  bytes per pixel = " + str(bpp))
     print("  realSize        = " + str(dataSize))
 
-    swizzled_data = addrlib.swizzle(width, height, surfOut.height, format_, surfOut.tileMode, s, surfOut.pitch,
-                                    surfOut.bpp, data)
+    swizzled_data = addrlib.swizzle(width, height, 1, format_, 0, 1, surfOut.tileMode,
+                                    s, surfOut.pitch, surfOut.bpp, 0, 0, data)
 
     if format_ == 1:
         if compSel[3] == 0:
@@ -504,9 +507,28 @@ def printInfo():
         " -o <output>           Output file, if not specified, the output file will have the same name as the intput file")
     print("")
     print("DDS to BFLIM options:")
-    print(" -tileMode <tileMode>  tileMode (4 is the default)")
-    print(" -swizzle <swizzle>    the intial swizzle value, a value from 0 to 7 (0 is the default)")
+    print(" -tileMode <tileMode>  tileMode (by default, the optimal tileMode will be selected)")
+    print(" -swizzle <swizzle>    the swizzle pattern, only values from 0 to 7 are allowed (0 is the default)")
     print(" -SRGB <n>             1 if the desired destination format is SRGB, else 0 (0 is the default)")
+    print("")
+    print("Supported tileModes:")
+    print(" - GX2_TILE_MODE_DEFAULT (0)")
+    print(" - GX2_TILE_MODE_LINEAR_ALIGNED (1)")
+    print(" - GX2_TILE_MODE_1D_TILED_THIN1 (2)")
+    print(" - GX2_TILE_MODE_1D_TILED_THICK (3)")
+    print(" - GX2_TILE_MODE_2D_TILED_THIN1 (4)")
+    print(" - GX2_TILE_MODE_2D_TILED_THIN2 (5)")
+    print(" - GX2_TILE_MODE_2D_TILED_THIN4 (6)")
+    print(" - GX2_TILE_MODE_2D_TILED_THICK (7)")
+    print(" - GX2_TILE_MODE_2B_TILED_THIN1 (8)")
+    print(" - GX2_TILE_MODE_2B_TILED_THIN2 (9)")
+    print(" - GX2_TILE_MODE_2B_TILED_THIN4 (10)")
+    print(" - GX2_TILE_MODE_2B_TILED_THICK (11)")
+    print(" - GX2_TILE_MODE_3D_TILED_THIN1 (12)")
+    print(" - GX2_TILE_MODE_3D_TILED_THICK (13)")
+    print(" - GX2_TILE_MODE_3B_TILED_THIN1 (14)")
+    print(" - GX2_TILE_MODE_3B_TILED_THICK (15)")
+    print(" - GX2_TILE_MODE_LINEAR_SPECIAL (16)")
     print("")
     print("Supported BFLIM formats:")
     print(" - GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM")
@@ -551,8 +573,8 @@ def printInfo():
 
 
 def main():
-    print("BFLIM Extractor v2.2")
-    print("(C) 2016-2018 AboodXD")
+    print("BFLIM Extractor v2.3")
+    print("(C) 2016-2019 AboodXD")
 
     input_ = sys.argv[-1]
 
@@ -578,7 +600,7 @@ def main():
             tileMode = int(sys.argv[sys.argv.index("-tileMode") + 1], 0)
 
         else:
-            tileMode = 4
+            tileMode = 0
 
         if "-swizzle" in sys.argv:
             swizzle = int(sys.argv[sys.argv.index("-swizzle") + 1], 0)

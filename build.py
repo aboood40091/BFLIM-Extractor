@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # BFLIM Extractor
-# Version v2.2
-# Copyright © 2016-2018 AboodXD
+# Version v2.3
+# Copyright © 2016-2019 AboodXD
 
 # This file is part of BFLIM Extractor.
 
@@ -28,7 +28,7 @@ import sys
 
 from cx_Freeze import setup, Executable
 
-version = '2.2'
+version = '2.3'
 
 # Pick a build directory
 dir_ = 'bflim_extract v' + version
@@ -54,8 +54,9 @@ setup(
     author="AboodXD",
     options={
         'build_exe': {
-            'compressed': 1,
             'build_exe': dir_,
+            'optimize': 2,
+            'silent': True,
         },
     },
     executables=[
